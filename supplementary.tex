@@ -1,0 +1,152 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools,booktabs}
+\usepackage[hidelinks]{hyperref}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\title{Supplementary Material\\[2pt]\large Full derivations and diagnostic case study for\\``What can media-only liver-on-a-chip concentration data identify?\\Structural identifiability, a continuous equivalence family, and a cautionary case study in practical identifiability''}
+\author{}
+\date{}
+\begin{document}
+\maketitle
+
+This document gives the full derivations behind the Theoretical section of the main paper, and documents in detail the sequence of diagnostic attempts summarized qualitatively in the Discussion.
+
+\section*{S1. Model equations}
+
+Two-compartment model: media compartment (concentration $C_m$, volume $V_m$) and a lumped cell-associated compartment (concentration $C_c$, volume $V_c$), linked by distributional clearance $CL_d$ and cell:media partition coefficient $K_p$, first-order non-specific binding (NSB) loss from media at rate $k_b$, and metabolism (intrinsic clearance $CL_{int}$) confined to the cell compartment:
+\begin{align}
+\frac{dC_m}{dt} &= -\frac{CL_d}{V_m}C_m + \frac{CL_d}{K_p V_m}C_c - k_b C_m, \\
+\frac{dC_c}{dt} &= \frac{CL_d}{V_c}C_m - \left(\frac{CL_d}{K_p V_c} + \frac{CL_{int}}{V_c}\right)C_c.
+\end{align}
+Matrix form $\dot{\mathbf{x}} = A\mathbf{x}$ with $\mathbf{x}=[C_m,C_c]^T$ and
+\[
+A = \begin{pmatrix} a_{11} & a_{12} \\ a_{21} & a_{22} \end{pmatrix}, \quad
+a_{11}=-\Bigl(\frac{CL_d}{V_m}+k_b\Bigr),\ a_{12}=\frac{CL_d}{K_pV_m},\ a_{21}=\frac{CL_d}{V_c},\ a_{22}=-\Bigl(\frac{CL_d}{K_pV_c}+\frac{CL_{int}}{V_c}\Bigr).
+\]
+Media volume with evaporation: $V_m(t) = \max(V_{m0} - e\cdot t, \text{floor})$, with $e$ a linear-in-time evaporation rate. Evaporation is treated as a known, externally measured input (via residual-volume weighing) throughout the structural identifiability derivation in S2; the full simulation code allows $e$ to be either fixed or jointly fitted, and the distinction matters for the practical-identifiability case study in S4. Initial condition: dose in media only, $C_m(0)=C_0$, $C_c(0)=0$.
+
+\section*{S2. Laplace-transform derivation of structural identifiability}
+
+Taking the Laplace transform of the system above with $y(t)=C_m(t)$ observed and $\mathbf{x}(0)=[C_0,0]^T$:
+\[
+\frac{Y(s)}{C_0} = \frac{s-a_{22}}{s^2-(a_{11}+a_{22})s+(a_{11}a_{22}-a_{12}a_{21})}.
+\]
+The denominator and numerator coefficients are the only quantities determined by data of arbitrary density and duration:
+\begin{itemize}
+\item Numerator constant term: $-a_{22}$
+\item Denominator $s^1$ coefficient: $-(a_{11}+a_{22})$, hence $a_{11}$ given $a_{22}$
+\item Denominator $s^0$ coefficient: $a_{11}a_{22}-a_{12}a_{21}$, hence $a_{12}a_{21} \equiv P = CL_d^2/(K_pV_mV_c)$ given $a_{11}$, $a_{22}$
+\end{itemize}
+So exactly three real numbers --- $a_{11}$, $a_{22}$, $P$ --- are identifiable from $C_m(t)$, regardless of sampling. With $V_m$, $V_c$ known, this gives 3 equations in the 4 unknowns $CL_d$, $K_p$, $CL_{int}$, $k_b$:
+\[
+a_{11}=-\Bigl(\frac{CL_d}{V_m}+k_b\Bigr), \qquad a_{22}=-\Bigl(\frac{CL_d}{K_pV_c}+\frac{CL_{int}}{V_c}\Bigr), \qquad P=\frac{CL_d^2}{K_pV_mV_c}.
+\]
+
+\subsection*{S2.1 Continuous equivalence family}
+
+Solving for $(CL_d, K_p, CL_{int})$ in terms of a free parameter $k_b$:
+\begin{align}
+CL_d(k_b) &= V_m(-a_{11}-k_b), \\
+K_p(k_b) &= \frac{CL_d(k_b)^2}{P\,V_m V_c}, \\
+CL_{int}(k_b) &= -a_{22}V_c - \frac{CL_d(k_b)}{K_p(k_b)}.
+\end{align}
+Any $k_b$ in the admissible range (yielding positive $CL_d$, $K_p$, $CL_{int}$) generates a full parameter quadruple consistent with the same $(a_{11}, a_{22}, P)$, hence the same $C_m(t)$ trajectory exactly. This was verified symbolically (SymPy): substituting the closed-form solution back into the definitions of $a_{11}$, $a_{22}$, $P$ recovers the assumed values identically for arbitrary $k_b$.
+
+\textbf{Numerical verification.} Two parameter sets --- $(CL_{int}, CL_d, K_p, k_b) = (4.5, 8.0, 5.0, 0.0008)$ and $(3.243, 4.48, 1.568, 0.003)$, both consistent with the same $(a_{11}, a_{22}, P)$ by construction --- were each simulated through the full nonlinear ODE solver (constant-volume case, $e=0$) and their $C_m(t)$ trajectories compared. Maximum absolute difference: $3.76\times10^{-8}$; maximum relative difference: $3.92\times10^{-7}$ (attributable to \texttt{solve\_ivp} numerical tolerance, not a real difference --- the trajectories are analytically identical).
+
+\subsection*{S2.2 Resolution via independent $k_b$}
+
+If $k_b$ is measured independently, the three equations above become 3 equations in the 3 remaining unknowns $(CL_d, K_p, CL_{int})$, with a unique solution given by the same closed-form expressions evaluated at the known $k_b$.
+
+\section*{S3. Exact asymptotic bias limits}
+
+Define the conventional apparent clearance as $CL_{naive} = V_m \cdot k_{dep}$, where $k_{dep}$ is the monoexponential media-depletion rate constant obtained by log-linear regression of $C_m(t)$ assuming a single well-mixed compartment at constant $V_m$. The terminal decay rate an analyst would fit corresponds to the eigenvalue of $A$ with smaller magnitude ($\lambda_{slow}$), so $CL_{naive} = -\lambda_{slow}\cdot V_m$.
+
+\subsection*{S3.1 Fast-distribution limit ($CL_d/CL_{int}\to\infty$)}
+
+As $CL_d\to\infty$ with the other parameters fixed, $\lambda_{slow}$ converges to
+\[
+\lambda_{slow} \to -\frac{K_p CL_{int}+k_bV_m}{V_m+K_pV_c}, \qquad\text{so}\qquad CL_{naive} \to \frac{V_m(K_pCL_{int}+k_bV_m)}{V_m+K_pV_c}.
+\]
+Confirmed numerically via direct eigenvalue evaluation across $CL_d \in \{8, 80, 800, \dots, 8\times10^{12}\}\ \mu$L/min (other parameters: $CL_{int}=4.5$, $K_p=5.0$, $k_b=0.0008$, $V_m=1600$, $V_c=3.0$; asymptotic value 23.5591):
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lr@{}}
+\toprule
+$CL_d$ & $CL_{naive}$ \\
+\midrule
+8 & 7.177 \\
+80 & 18.734 \\
+800 & 22.961 \\
+8{,}000 & 23.498 \\
+$8\times10^5$ & 23.5585 \\
+$8\times10^8$ & 23.5591 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection*{S3.2 Fast-metabolism limit ($CL_{int}/CL_d\to\infty$)}
+
+As $CL_{int}\to\infty$, the cell compartment approaches a quasi-steady-state sink ($C_c\to 0$ relative to $C_m$), and $\lambda_{slow}\to-(CL_d/V_m+k_b)$, giving $CL_{naive} \to CL_d+k_bV_m$, independent of $CL_{int}$. Confirmed numerically across $CL_{int} \in \{4.5, 45, \dots, 4.5\times10^{10}\}$ ($CL_d=8.0$ fixed): $CL_{naive}$ converges to 9.28 ($=8.0+1600\times0.0008$) by $CL_{int}=4500$, matching to 4 significant figures.
+
+\subsection*{S3.3 Nondimensionalization}
+
+With $\tau=(CL_d/V_m)t$, $x=C_m/C_m(0)$, $y=C_c/(K_pC_m(0))$:
+\[
+\frac{dx}{d\tau} = -(1+\beta)x+y, \qquad \frac{dy}{d\tau} = \frac{1}{r}\bigl[x-(1+\mu)y\bigr],
+\]
+where $r=K_pV_c/V_m$, $\beta=k_bV_m/CL_d$, $\mu=K_pCL_{int}/CL_d$. Derived and verified symbolically (chain-rule substitution of $C_m=C_m(0)\cdot x(\tau)$, $C_c=K_pC_m(0)\cdot y(\tau)$, $t=(V_m/CL_d)\tau$ into the original ODEs). Rewriting the two asymptotic bias-ratio limits in these dimensionless terms:
+\[
+\frac{CL_{naive}}{CL_{int}} \to \frac{K_p}{1+r}\Bigl(1+\frac{\beta}{\mu}\Bigr) \quad \text{as } CL_d/CL_{int}\to\infty, \qquad\qquad
+\frac{CL_{naive}}{CL_{int}} \to \frac{K_p}{\mu}(1+\beta) \quad \text{as } CL_{int}/CL_d\to\infty.
+\]
+Note that $\mu\to0$ or $\mu\to\infty$ alone does not uniquely specify which physical limit is meant ($\mu=K_pCL_{int}/CL_d$ can approach these limits via $CL_d\to\infty$, $CL_{int}\to0$, or $K_p\to0/\infty$ separately); the two formulas above are specifically derived along the $CL_d\to\infty$ and $CL_{int}\to\infty$ paths respectively, with the other parameters held fixed.
+
+\section*{S4. Practical identifiability: a methodological case study}
+
+This section documents in full the sequence of diagnostic attempts summarized qualitatively in the Discussion.
+
+\subsection*{S4.1 FIM covariance approximation: numerical instability near the structural degeneracy}
+
+For representative scenarios (CN Bio hardware, $V_m=1600\ \mu$L, $V_c=3\ \mu$L, low- and high-$CL_{int}$ regimes, dense [$n=12$] sampling, 15\% proportional noise), nonlinear least-squares fits (trust-region-reflective) were performed with all 5 parameters ($CL_{int}$, $CL_d$, $K_p$, $k_b$, $e$) free. The Gauss-Newton Fisher Information Matrix $J^TJ$ was computed at each fitted optimum.
+
+Observed condition numbers of $J^TJ$: $1.377\times10^{17}$ (low-$CL_{int}$) and $1.447\times10^{12}$ (high-$CL_{int}$) --- both indicating numerical singularity at or beyond double-precision limits. Comparing plain matrix inversion against a truncated-SVD pseudoinverse ($\text{rcond}=10^{-10}$) on the identical fitted Jacobian: relative standard errors for $CL_{int}$ of $1.404\times10^3$ (plain inverse) vs. $6.885$ (pseudoinverse) for the low-$CL_{int}$ scenario, and $2.367$ vs.\ $0.190$ for the high-$CL_{int}$ scenario --- disagreements of two to three orders of magnitude from the choice of inversion algorithm alone, on identical data and an identical point estimate.
+
+\subsection*{S4.2 Single-start profile likelihood: contaminated by convergence failure}
+
+A profile likelihood for $CL_{int}$ (fixing $CL_{int}$ at a grid of values relative to its fitted value, re-optimizing all other free parameters, recording the resulting SSE) was computed with a single optimizer start per grid point. The resulting profile was non-monotonic and erratic: near-zero $\Delta$SSE (as good as the unconstrained optimum) recurred at several grid points interspersed with a sharp spike ($\Delta\text{SSE}=0.34$) at an intermediate ratio (4.8$\times$) --- a pattern inconsistent with a well-behaved likelihood profile and diagnostic of the optimizer failing to locate the true conditional optimum at that grid point from a fixed, non-adaptive starting guess.
+
+\subsection*{S4.3 Multi-start profile likelihood}
+
+Repeating the profile at each grid point with 6 random restarts (starting multipliers drawn uniformly from $[0.3, 3.0]\times$ the nominal parameter values) and retaining the best (lowest-SSE) fit at each point gave materially more stable profiles. Three findings:
+
+\begin{enumerate}
+\item \textbf{$k_b$, $e$ unknown, sparse sampling ($n=5$):} $\Delta$SSE remained near zero (all 7 scanned points inside a 95\% profile-likelihood confidence region, $\chi^2_1$ threshold) across the full scanned range of $CL_{int}$ ratios (0.3$\times$--3.0$\times$), i.e.\ $CL_{int}$ is not practically constrained by this design.
+\item \textbf{$k_b$, $e$ known (fixed at true values), sparse sampling ($n=5$):} $\Delta$SSE also remained near zero across the same range --- fixing $k_b$ and $e$ did not, in this regime, materially sharpen the practical identifiability of $CL_{int}$.
+\item \textbf{$k_b$, $e$ known, dense sampling ($n=12$):} the same result held even under dense sampling.
+\end{enumerate}
+
+This is the basis for the main text's methodological finding: resolving the structural degeneracy (S2.2) does not by itself guarantee practical estimability under realistic finite, noisy sampling designs, in the parameter regime examined (low $CL_{int}$ relative to $CL_d$, i.e.\ small $\mu$).
+
+\subsection*{S4.4 Scope and caveats}
+
+All numerical values above are for one illustrative parameter regime (CN Bio hardware, low-$CL_{int}$ level) and should not be read as general claims about all regimes or platforms. The multi-start profile likelihood used 6 restarts per grid point with uniform-multiplier initialization; a more exhaustive search might further change the profile shape at the extremes of the scanned range. We did not perform a DAISY-based or other formal structural identifiability check on the complete 5-parameter, time-varying-volume model; it is possible additional structural degeneracies exist between $k_b$ and $e$ in the full model.
+
+\section*{S5. Code and reproducibility}
+
+All derivations, symbolic verification, and numerical checks were performed in Python 3 (NumPy, SciPy, SymPy, Matplotlib). Code files:
+\begin{itemize}
+\item \texttt{model.py} --- ODE right-hand side, platform hardware parameters, media-concentration simulation
+\item \texttt{analysis.py} --- synthetic data generation, naive and mechanistic fitting, FIM-based practical identifiability
+\item \texttt{structural\_identifiability.py} --- symbolic and numerical verification of the equivalence family (S2)
+\item \texttt{profile\_likelihood.py}, \texttt{diagnostics\_S4.py} --- profile-likelihood scanning utilities and the consolidated, end-to-end script reproducing every numbered claim in S4.1--S4.3
+\item \texttt{make\_results\_figures.py}, \texttt{build\_figure1.py} --- figure-generation scripts for all main-text figures
+\end{itemize}
+
+\begin{thebibliography}{9}
+\bibitem{docci2022} Docci L, Milani N, Ramp T, et al.\ Exploration and application of a liver-on-a-chip device in combination with modelling and simulation for quantitative drug metabolism studies. \textit{Lab Chip}. 2022;22(6):1187--1205.
+\bibitem{rajan2023} Rajan SAP, Sherfey J, Ohri S, et al.\ A novel milli-fluidic liver tissue chip with continuous recirculation for predictive pharmacokinetics applications. \textit{AAPS J}. 2023;25(6):102.
+\end{thebibliography}
+\end{document}

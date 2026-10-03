@@ -1,0 +1,43 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools,booktabs,array}
+\usepackage{graphicx}
+\usepackage[labelfont=bf,labelsep=space,font=small,justification=raggedright,singlelinecheck=off]{caption}
+\renewcommand{\figurename}{Fig.}
+\usepackage[hidelinks]{hyperref}
+\usepackage[authoryear,round]{natbib}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+
+\begin{document}
+
+\begin{center}
+{\large\bfseries What can media-only liver-on-a-chip concentration data identify?\\[2pt]
+Structural identifiability, a continuous equivalence family, and a cautionary\\
+case study in practical identifiability}\\[6pt]
+{\small (adapted for submission to the Journal of Pharmacokinetics and Pharmacodynamics;\\
+proofs and the full diagnostic case study in Supplementary Material)}
+\end{center}
+
+\input{abstract}
+\input{introduction}
+\input{theoretical}
+\input{methods}
+\input{results}
+\input{discussion}
+\input{conclusions}
+
+\bibliographystyle{plainnat}
+\begin{thebibliography}{99}
+\bibitem[Hallifax et al.(2010)]{hallifax2010} Hallifax D, Foster JA, Houston JB (2010) Prediction of human metabolic clearance from in vitro systems: retrospective analysis and prospective view. Pharm Res 27(10):2150--2161.
+\bibitem[Docci et al.(2022)]{docci2022} Docci L, Milani N, Ramp T, Romeo AA, Godoy P, Franyuti DO, Kr{\"a}henb{\"u}hl S, Gertz M, Galetin A, Parrott N, Fowler S (2022) Exploration and application of a liver-on-a-chip device in combination with modelling and simulation for quantitative drug metabolism studies. Lab Chip 22(6):1187--1205.
+\bibitem[Tsamandouras et al.(2017)]{tsamandouras2017} Tsamandouras N, Kostrzewski T, Stokes CL, Griffith LG, Hughes DJ, Cirit M (2017) Quantitative assessment of population variability in hepatic drug metabolism using a perfused three-dimensional human liver microphysiological system. J Pharmacol Exp Ther 360(1):95--105.
+\bibitem[Rajan et al.(2023)]{rajan2023} Rajan SAP, Sherfey J, Ohri S, Nichols L, Smith JT, Parekh P, Kadar EP, Clark F, George BT, Gregory L, Tess D, Gosset JR, Liras J, Geishecker E, Obach RS, Cirit M (2023) A novel milli-fluidic liver tissue chip with continuous recirculation for predictive pharmacokinetics applications. AAPS J 25(6):102.
+\bibitem[Milani et al.(2022)]{milani2022} Milani N, Parrott N, Ortiz Franyuti D, et al.\ (2022) Application of a gut-liver-on-a-chip device and mechanistic modelling to the quantitative in vitro pharmacokinetic study of mycophenolate mofetil. Lab Chip 22(15):2853--2868.
+\bibitem[Milani et al.(2024)]{milani2024} Milani N, Parrott N, Galetin A, Fowler S, Gertz M (2024) In silico modeling and simulation of organ-on-a-chip systems to support data analysis and a priori experimental design. CPT Pharmacometrics Syst Pharmacol 13:524--543.
+\bibitem[Aravindakshan et al.(2025)]{aravindakshan2025} Aravindakshan MR, Mandal C, Pothen A, Schaller S, Maass C (2025) DigiLoCS: A leap forward in predictive organ-on-chip simulations. PLoS One 20(1):e0314083.
+\bibitem[Pamies et al.(2024)]{pamies2024} Pamies D, Ekert J, Zurich MG, et al.\ (2024) Recommendations on fit-for-purpose criteria to establish quality management for microphysiological systems and for monitoring their reproducibility. Stem Cell Reports 19(5):604--617.
+\end{thebibliography}
+
+\end{document}

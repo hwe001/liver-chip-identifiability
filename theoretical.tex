@@ -1,0 +1,87 @@
+\section*{Theoretical}
+
+\subsection*{Model}
+
+We consider the minimal mechanistic structure common to liver-chip clearance analyses: a media compartment (concentration $C_m$, volume $V_m$) exchanging drug with a lumped cell-associated compartment (concentration $C_c$, volume $V_c$), linked by a distributional clearance $CL_d$ and a cell:media partition coefficient $K_p$, with first-order non-specific binding (NSB) loss from media at rate $k_b$, and metabolism (intrinsic clearance $CL_{int}$) confined to the cell compartment:
+\begin{align}
+\frac{dC_m}{dt} &= -\frac{CL_d}{V_m}C_m + \frac{CL_d}{K_p V_m}C_c - k_b C_m, \label{eq:cm}\\
+\frac{dC_c}{dt} &= \frac{CL_d}{V_c}C_m - \left(\frac{CL_d}{K_p V_c} + \frac{CL_{int}}{V_c}\right)C_c. \label{eq:cc}
+\end{align}
+In matrix form $\dot{\mathbf{x}} = A\mathbf{x}$ with $\mathbf{x} = [C_m, C_c]^T$,
+\[
+A = \begin{pmatrix} a_{11} & a_{12} \\ a_{21} & a_{22} \end{pmatrix}, \quad
+a_{11} = -\left(\frac{CL_d}{V_m} + k_b\right),\ a_{12} = \frac{CL_d}{K_p V_m},\ a_{21} = \frac{CL_d}{V_c},\ a_{22} = -\left(\frac{CL_d}{K_p V_c} + \frac{CL_{int}}{V_c}\right).
+\]
+This is structurally the same class of model used by Docci et al.\ \citep{docci2022}, the DigiLoCS digital twin \citep{aravindakshan2025}, and Milani et al.'s gut-liver OoC framework \citep{milani2022,milani2024}, restricted here to a single tissue compartment and constant volume; evaporation is addressed separately below. $V_m$ and $V_c$ are fixed, known hardware parameters; $CL_d$, $K_p$, $CL_{int}$, $k_b$ are the four unknown kinetic parameters.
+
+This reduction is deliberate rather than a simplifying convenience. Every richer liver-chip model in current use --- additional compartments, reversible rather than first-order NSB, intracellular sub-structure --- contains this two-compartment system as the core process linking an observed media signal to an unobserved intracellular metabolic rate. An identifiability obstruction present in this minimal core is therefore a necessary feature, not an artifact of simplification: a richer model can only fail to inherit it by adding structure that specifically breaks the degeneracy (for example, an additional observed compartment), not by adding structure that leaves the media-to-cell link otherwise intact. The minimal model is accordingly the right place to prove an exact, general result; we return to what is and is not known about richer models directly in the Discussion.
+
+\subsection*{Structural identifiability of media-only sampling}
+
+The overwhelming majority of published liver-chip PK studies sample only the media compartment serially, reserving any cell-associated (lysate) measurement for a single endpoint, if at all \citep{docci2022,rajan2023}. Taking the Laplace transform of Eqs.~\eqref{eq:cm}--\eqref{eq:cc} with an impulse-type initial condition (dose in media only, $C_m(0)=C_0$, $C_c(0)=0$) and observing $y(t)=C_m(t)$, the transfer function is
+\begin{equation}
+\frac{Y(s)}{C_0} = \frac{s - a_{22}}{s^2 - (a_{11}+a_{22})s + (a_{11}a_{22} - a_{12}a_{21})}. \label{eq:transferfn}
+\end{equation}
+Only three quantities are recoverable from concentration-time data of arbitrary duration and density, however dense or extended: $a_{11}$, $a_{22}$, and the product $a_{12}a_{21} = CL_d^2/(K_p V_m V_c) \equiv P$. With $V_m$ and $V_c$ known, this gives
+\begin{equation}
+a_{11} = -\left(\frac{CL_d}{V_m}+k_b\right), \qquad a_{22} = -\left(\frac{CL_d}{K_p V_c}+\frac{CL_{int}}{V_c}\right), \qquad P = \frac{CL_d^2}{K_p V_m V_c}, \label{eq:threeeqns}
+\end{equation}
+\textbf{three equations in the four unknowns} $CL_d$, $K_p$, $CL_{int}$, $k_b$: the model is structurally unidentifiable from media-only sampling, by exactly one degree of freedom. This conclusion is exact, holds in closed form, and depends on nothing but the structure of Eqs.~\eqref{eq:cm}--\eqref{eq:cc}: it is unaffected by how many samples are taken, how long the incubation runs, which drug is studied, or which commercial platform generated the data. No improvement in sampling density, experiment duration, or fitting procedure can recover the missing degree of freedom, because it is not missing from the data by accident --- it is absent from what the model structure makes observable in the first place.
+
+\subsubsection*{The continuous equivalence family}
+
+Equation~\eqref{eq:threeeqns} can be solved explicitly for $CL_d$, $K_p$, $CL_{int}$ in terms of a free parameter $k_b$:
+\begin{equation}
+CL_d(k_b) = V_m(-a_{11}-k_b), \qquad K_p(k_b) = \frac{CL_d(k_b)^2}{P\,V_m V_c}, \qquad CL_{int}(k_b) = -a_{22}V_c - \frac{CL_d(k_b)}{K_p(k_b)}. \label{eq:family}
+\end{equation}
+Choosing any admissible $k_b$ (yielding positive $CL_d$, $K_p$, $CL_{int}$) defines a corresponding parameter quadruple $(CL_d, K_p, CL_{int}, k_b)$ consistent with the same $(a_{11}, a_{22}, P)$, and therefore the same media concentration trajectory $C_m(t)$, exactly. Figure~\ref{fig:degeneracy}a illustrates this numerically: two parameter quadruples differing by up to 4-fold in each parameter --- $(CL_d, K_p, CL_{int}, k_b) = (8.0, 5.0, 4.5, 0.0008)$ and $(4.48, 1.57, 3.24, 0.003)$ --- produce media concentration trajectories that are visually indistinguishable over a simulated 33-hour incubation. Figure~\ref{fig:degeneracy}b shows the relative difference between the two trajectories directly: it remains below $4\times10^{-7}$ throughout, consistent with the two parameter sets being related by Eq.~\eqref{eq:family} and differing only by the numerical tolerance of the ODE solver, not by any genuine difference in the predicted observable.
+
+\subsubsection*{Resolution via independent measurement of $k_b$}
+
+Independent characterization of $k_b$ --- for example via a cell-free NSB control, already run by Docci et al.\ and Rajan et al.\ \citep{docci2022,rajan2023} --- collapses the family in Eq.~\eqref{eq:family} to a single point, making $CL_d$, $K_p$, and $CL_{int}$ structurally identifiable via the same three relations. This is not the only route: intracellular sampling, or independently fixing $K_p$ or $CL_d$, would work equally well \citep{milani2024}. The result applies to the stated first-order NSB representation; real device adsorption can be reversible and compound-class-dependent (Rajan et al.\ found $>$85\% recovery for 17 of 21 compounds, but appreciably lower recovery for some lipophilic acidic drugs \citep{rajan2023}), so a cell-free recovery experiment characterizes $k_b$ for that representation, not necessarily every loss mechanism at play. Evaporation is more tractable: because it manifests as a measurable $V_m(t)$, it can in principle be supplied to the model as a known input rather than estimated jointly, provided the volume trajectory and any sampling withdrawals are adequately characterized.
+
+At this point it is tempting to conclude that measuring $k_b$ settles the matter: the structural degeneracy is resolved, and $CL_d$, $K_p$, $CL_{int}$ become uniquely determined. This is correct as a statement about noise-free data of infinite precision. It is not, by itself, a statement about what a real experiment with finite samples and realistic noise can estimate. Structural identifiability guarantees that a unique answer exists; it says nothing about how sharply that answer is pinned down once noise is introduced. We return to this distinction directly, with a worked demonstration, in the Results.
+
+\subsection*{Exact bias limits of conventional single-compartment analysis}
+
+Define the conventional apparent clearance as $CL_{naive} = V_m k_{dep}$, where $k_{dep}$ is the monoexponential media-depletion rate constant an analyst would fit assuming a single well-mixed compartment at constant $V_m$ (the eigenvalue of $A$ with smaller magnitude). Two asymptotic regimes admit exact closed-form limits.
+
+\textbf{Fast-distribution limit} ($CL_d/CL_{int}\to\infty$): as $CL_d\to\infty$ with the other parameters fixed,
+\begin{equation}
+CL_{naive} \to \frac{V_m(K_p CL_{int} + k_b V_m)}{V_m + K_p V_c}. \label{eq:fastdist}
+\end{equation}
+
+\textbf{Fast-metabolism limit} ($CL_{int}/CL_d\to\infty$): as $CL_{int}\to\infty$, the cell compartment behaves as an absorbing sink and
+\begin{equation}
+CL_{naive} \to CL_d + k_b V_m, \label{eq:fastmetab}
+\end{equation}
+independent of $CL_{int}$.
+
+Nondimensionalizing with $\tau = (CL_d/V_m)t$, $x = C_m/C_m(0)$, $y = C_c/(K_p C_m(0))$ reduces Eqs.~\eqref{eq:cm}--\eqref{eq:cc} to
+\begin{equation}
+\frac{dx}{d\tau} = -(1+\beta)x + y, \qquad \frac{dy}{d\tau} = \frac{1}{r}\left[x - (1+\mu)y\right], \label{eq:nondim}
+\end{equation}
+where $r = K_p V_c/V_m$, $\beta = k_b V_m/CL_d$, and $\mu = K_p CL_{int}/CL_d$. The dimensionless concentration dynamics $x(\tau)$ are governed by exactly these three groups: nominally different platforms produce identical trajectories whenever $r$, $\beta$, and $\mu$ coincide, regardless of absolute volumes or cell numbers. The bias ratio $CL_{naive}/CL_{int}$ depends additionally on $K_p$ directly, since it compares apparent clearance against $CL_{int}$ rather than comparing dynamics alone: in these terms, the fast-distribution limit is $CL_{naive}/CL_{int} \to [K_p/(1+r)](1+\beta/\mu)$, reducing to $K_p/(1+r)$ when NSB is negligible relative to metabolism ($\beta\ll\mu$); the fast-metabolism limit is $CL_{naive}/CL_{int} \to (K_p/\mu)(1+\beta)$. Thus, as $CL_{int}/CL_d\to\infty$, the apparent-to-intrinsic clearance ratio tends to zero, producing arbitrarily severe underestimation; in the fast-distribution limit, the bias direction instead depends on $K_p$, $r$, and the relative NSB contribution.
+
+\begin{table}[t]
+\centering
+\caption{Minimum reporting checklist for liver-chip pharmacokinetic studies intended to support IVIVE}
+\label{tab:checklist}
+\begin{tabular}{@{}cp{11cm}@{}}
+\toprule
+\# & Item \\
+\midrule
+1 & Compartment volumes and sampling/replacement volumes \\
+2 & Cell number or measured functional cell mass \\
+3 & Flow/recirculation rate and geometry \\
+4 & Evaporation trajectory \\
+5 & Compound-specific cell-free recovery/NSB data \\
+6 & Raw concentration-time data with below-LOQ values identified \\
+7 & Actual sampling times and analytical LOQ \\
+8 & Model equations, parameter definitions, units, externally fixed parameters \\
+\midrule
+9 & \textit{(recommended)} Structural identifiability assessment for the specified observation scheme \\
+10 & \textit{(recommended)} Practical-identifiability/uncertainty analysis using a method appropriate near any known structural degeneracy, not point estimates alone \\
+\bottomrule
+\end{tabular}
+\end{table}

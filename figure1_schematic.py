@@ -92,7 +92,7 @@ axC.text(5.0, 4.35, "necessary, not sufficient", fontsize=8.5, ha="center",
 arrow(axC, (5.0, 4.95), (5.0, 3.15), color="#b00000")
 box(axC, (0.7, 1.55), 8.6, 1.55, "Practical estimability", fc="#fdf2d0")
 
-fig.savefig("/mnt/user-data/outputs/figure1_schematic.pdf", dpi=600, bbox_inches="tight")
-fig.savefig("/mnt/user-data/outputs/figure1_schematic.png", dpi=600, bbox_inches="tight")
+fig.savefig("figures/Fig1.pdf", dpi=600, bbox_inches="tight")
+fig.savefig("figures/Fig1.png", dpi=600, bbox_inches="tight")
 print("saved figure1_schematic.pdf and .png")
 print(f"figure width target: {WIDTH_MM} mm ({WIDTH_IN:.3f} in)")
